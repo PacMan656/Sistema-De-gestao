@@ -4,6 +4,7 @@ module.exports = {
   files: ['**/*', '!**/*.map'],
   extraMetadata: { main: 'main.cjs' },
   asar: true,
+  compression: 'store',
   asarUnpack: ['server.mjs', 'node_modules/**', 'drizzle/**'],
   npmRebuild: false,
   win: { target: [{ target: 'portable', arch: ['x64'] }], signExecutable: false, icon: require('node:path').resolve(__dirname, '../public/icons/icon-512.png') },
