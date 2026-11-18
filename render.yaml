@@ -1,0 +1,29 @@
+# Deploys the React app, REST API and Socket.IO on the same HTTPS service.
+# A paid service and persistent disk are required to retain the embedded database.
+services:
+  - type: web
+    name: patriti
+    runtime: node
+    repo: https://github.com/PacMan656/Sistema-De-gestao
+    branch: main
+    plan: starter
+    numInstances: 1
+    autoDeployTrigger: off
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: patriti-data
+      mountPath: /var/data/patriti
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: PATRITI_DATA_DIR
+        value: /var/data/patriti
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true

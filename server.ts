@@ -17,6 +17,7 @@ async function bootstrap() {
     console.log(`Primeiro acesso: crie o administrador de TI na página de login. Código de configuração: ${setupToken}`);
   }
   const app = express();
+  app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
   const server = http.createServer(app);
 
   app.use(express.json({ limit: '2mb' }));

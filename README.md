@@ -2,6 +2,8 @@
 
 Inventário de TI e helpdesk corporativo com login por código do setor e senha, setores gerenciados pelo TI e aplicativo PWA.
 
+Para colocar o sistema completo online, siga [Publicar o PatriTI](DEPLOY.md). A configuração inclui interface, login, API, chat e banco persistente em um serviço Node.js.
+
 ## Começar neste computador
 
 Use Node.js 24.12 ou superior.
