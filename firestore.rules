@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function profile() { return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data; }
+    function active() { return signedIn() && profile().active == true; }
+    function ti() { return active() && profile().role == 'admin_ti'; }
+    function sector(departmentId) { return active() && (ti() || profile().departmentId == departmentId); }
+    function bootstrap() {
+      // Replaced only in the ignored deployment artifact by prepare-firebase.mjs.
+      // No wildcard, first-signup privilege or public setup password is accepted.
+      return signedIn() && request.auth.uid == 'BOOTSTRAP_TI_UID_NOT_CONFIGURED'
+        && !exists(/databases/$(database)/documents/system/bootstrap);
+    }
+    function validProfile(data, uid) {
+      return data.keys().hasOnly(['id','uid','email','fullName','matricula','jobTitle','role','departmentId','departmentName','departmentCode','departmentLocation','active','onboardingCompleted'])
+        && data.uid == uid && data.id is int && data.departmentId is int
+        && data.active is bool && data.onboardingCompleted == true
+        && data.email == '' && data.fullName is string;
+    }
+    match /system/bootstrap {
+      allow create: if bootstrap() && request.resource.data.keys().hasOnly(['completed']) && request.resource.data.completed == true;
+      allow read, update, delete: if false;
+    }
+    match /profiles/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || ti());
+      allow list: if ti();
+      allow create: if validProfile(request.resource.data, uid) && (
+        (bootstrap() && uid == request.auth.uid && request.resource.data.role == 'admin_ti' && request.resource.data.departmentId == 1 && request.resource.data.id == 1)
+        || (ti() && request.resource.data.role == 'colaborador' && request.resource.data.departmentId != 1));
+      allow update: if ti() && validProfile(request.resource.data, uid)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.departmentId == resource.data.departmentId
+        && (uid != request.auth.uid || request.resource.data.active == true);
+      allow delete: if false;
+    }
+    match /sectorLogins/{code} {
+      // Login identifiers are public, not passwords. Enumeration is denied.
+      allow get: if true;
+      allow list: if ti();
+      allow create, update: if request.resource.data.keys().hasOnly(['email'])
+        && request.resource.data.email is string && request.resource.data.email.size() < 150
+        && (ti() || (bootstrap() && code == 'TI' && request.resource.data.email == 'patriti-ti@patriti.invalid'));
+      allow delete: if ti() && code != 'TI';
+    }
+    match /departments/{id} {
+      allow get: if sector(resource.data.id);
+      allow list: if ti();
+      allow create: if ti() || (bootstrap() && id == '1' && request.resource.data.code == 'TI' && request.resource.data.accessUid == request.auth.uid);
+      allow update: if ti() && request.resource.data.id == resource.data.id
+        && (id != '1' || (request.resource.data.code == 'TI' && request.resource.data.accessUid == resource.data.accessUid && request.resource.data.accessActive == true));
+      allow delete: if false;
+    }
+    match /equipments/{id} {
+      allow read: if sector(resource.data.departmentId);
+      allow create, update: if ti()
+        && request.resource.data.id is int && request.resource.data.departmentId is int
+        && !request.resource.data.keys().hasAny(['currentHolderName','currentHolderDocument','currentHolderRole','notes','networkAddress','portNumber','password','passwordHash'])
+        && getAfter(/databases/$(database)/documents/departments/$(string(request.resource.data.departmentId))).data.accessConfigured == true
+        && (request.resource.data.parentEquipmentId == null || (
+          getAfter(/databases/$(database)/documents/equipments/$(string(request.resource.data.parentEquipmentId))).data.departmentId == request.resource.data.departmentId
+          && getAfter(/databases/$(database)/documents/equipments/$(string(request.resource.data.parentEquipmentId))).data.equipmentType in ['Desktop','Notebook']
+          && !(request.resource.data.equipmentType in ['Desktop','Notebook'])));
+      allow delete: if false;
+    }
+    match /assetKeys/{key} { allow read, write: if ti(); }
+    match /equipmentPrivate/{id} { allow read, create, update: if ti(); allow delete: if false; }
+    match /movements/{id} { allow read, create: if ti(); allow update, delete: if false; }
+    match /inspections/{id} { allow read, create: if ti(); allow update, delete: if false; }
+    match /incidents/{id} {
+      allow read: if sector(resource.data.departmentId);
+      allow create: if sector(request.resource.data.departmentId)
+        && request.resource.data.keys().hasOnly(['id','ticketCode','title','description','priority','status','departmentId','departmentName','departmentCode','departmentLocation','requesterId','requesterUid','requesterName','requesterEmail','assignedTechnicianId','equipmentId','equipmentAssetTag','equipmentModel','createdAt','updatedAt','resolvedAt'])
+        && request.resource.data.requesterUid == request.auth.uid
+        && request.resource.data.requesterId == profile().id
+        && request.resource.data.requesterName == profile().fullName
+        && request.resource.data.requesterEmail == ''
+        && request.resource.data.title is string && request.resource.data.title.size() >= 4 && request.resource.data.title.size() <= 160
+        && request.resource.data.description is string && request.resource.data.description.size() >= 6 && request.resource.data.description.size() <= 10000
+        && request.resource.data.status == 'Aberto' && request.resource.data.assignedTechnicianId == null && request.resource.data.resolvedAt == null
+        && request.resource.data.priority in ['Baixa','Média','Alta','Crítica']
+        && (request.resource.data.equipmentId == null || get(/databases/$(database)/documents/equipments/$(string(request.resource.data.equipmentId))).data.departmentId == request.resource.data.departmentId);
+      allow update: if ti() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','assignedTechnicianId','updatedAt','resolvedAt'])
+        && request.resource.data.status in ['Aberto','Em Atendimento','Resolvido'] && request.resource.data.assignedTechnicianId == profile().id;
+      allow delete: if false;
+    }
+    match /chatMessages/{id} {
+      allow read: if sector(resource.data.departmentId);
+      allow create: if sector(request.resource.data.departmentId)
+        && request.resource.data.keys().hasOnly(['id','departmentId','departmentName','departmentCode','incidentId','senderId','senderUid','senderName','senderRole','messageType','content','createdAt'])
+        && request.resource.data.senderUid == request.auth.uid && request.resource.data.senderId == profile().id
+        && request.resource.data.senderName == profile().fullName && request.resource.data.senderRole == profile().role
+        && request.resource.data.messageType == 'CHAT' && request.resource.data.incidentId == null
+        && request.resource.data.content is string && request.resource.data.content.size() > 0 && request.resource.data.content.size() <= 4000;
+      allow update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

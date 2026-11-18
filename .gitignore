@@ -8,3 +8,17 @@ data/
 *.log
 .env*
 !.env.example
+!.env.firebase.example
+.firebase/
+.firebaserc
+firebase-applet-config.json
+*service-account*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+*.pem
+*.key
+release/
+desktop/staging/
+functions/lib/
+functions/.env*
+!functions/.env.example

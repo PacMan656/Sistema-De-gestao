@@ -15,7 +15,8 @@ import type {
   PresenceUser,
 } from '../types/domain.ts';
 import { useAuth } from './AuthContext.tsx';
-import { isLocalMode } from '../lib/runtime.ts';
+import { isLocalMode, isFirebaseMode } from '../lib/runtime.ts';
+import { createFirebaseSocket } from '../firebase/socket.ts';
 import { createLocalSocket } from '../browser/socket.ts';
 
 interface SocketContextValue {
@@ -81,7 +82,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const socket = isLocalMode ? createLocalSocket(rbacToken, appUser) : io({
+    const socket = isFirebaseMode ? createFirebaseSocket(appUser) : isLocalMode ? createLocalSocket(rbacToken, appUser) : io({
       path: '/socket.io',
       auth: {
         token: rbacToken,

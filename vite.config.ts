@@ -70,7 +70,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
-        ...(local ? { pdfkit: path.resolve(import.meta.dirname, 'node_modules/pdfkit/js/pdfkit.standalone.js') } : {}),
+        ...(local || mode === 'firebase' ? { pdfkit: path.resolve(import.meta.dirname, 'node_modules/pdfkit/js/pdfkit.standalone.js') } : {}),
       },
     },
     server: {
