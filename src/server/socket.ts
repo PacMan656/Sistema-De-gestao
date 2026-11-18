@@ -1,3 +1,4 @@
+import { logFailure } from './safeLog.ts';
 import type { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import {
@@ -65,7 +66,7 @@ export function attachSocketServer(httpServer: HttpServer) {
       socket.data.user = user;
       return next();
     } catch (err) {
-      console.error('WebSocket handshake auth failed:', err);
+      logFailure('socket.auth', err);
       return next(new Error('Token inválido ou expirado no handshake WebSocket.'));
     }
   });
@@ -132,7 +133,7 @@ export function attachSocketServer(httpServer: HttpServer) {
         io.to(`dept:${targetDeptId}`).to('ti:triage').emit('chat:message', message);
         if (typeof ack === 'function') ack({ ok: true, message });
       } catch (err) {
-        console.error('Socket chat:message error:', err);
+        logFailure('socket.chat', err);
         if (typeof ack === 'function')
           ack({ ok: false, error: 'Erro ao enviar mensagem.' });
       }
@@ -178,7 +179,7 @@ export function attachSocketServer(httpServer: HttpServer) {
 
         if (typeof ack === 'function') ack({ ok: true, incident });
       } catch (err) {
-        console.error('Socket incident:create error:', err);
+        logFailure('socket.incident', err);
         if (typeof ack === 'function')
           ack({ ok: false, error: 'Erro interno ao abrir chamado.' });
       }
@@ -232,7 +233,7 @@ export function attachSocketServer(httpServer: HttpServer) {
 
           if (typeof ack === 'function') ack({ ok: true, incident: updated });
         } catch (err) {
-          console.error('Socket incident:status_update error:', err);
+          logFailure('socket.status', err);
           if (typeof ack === 'function')
             ack({ ok: false, error: 'Erro ao atualizar status.' });
         }

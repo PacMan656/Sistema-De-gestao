@@ -40,6 +40,7 @@ import { LocalDataControls } from './components/LocalDataControls.tsx';
 import { isLocalMode } from './lib/runtime.ts';
 import { ChangePassword } from './components/ChangePassword.tsx';
 import { PwaStatus } from './components/PwaStatus.tsx';
+import { PrivacyNotice } from './components/PrivacyNotice.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { SocketProvider, useSocket } from './context/SocketContext.tsx';
 import { apiFetch, downloadInventoryExport } from './lib/api.ts';
@@ -1199,6 +1200,7 @@ export default function App() {
         <SessionWorkspace />
       </SocketProvider>
     </AuthProvider>
+    <PrivacyNotice />
     </>
   );
 }

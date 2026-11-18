@@ -1,5 +1,5 @@
 import { deleteApp, initializeApp } from 'firebase/app';
-import { createUserWithEmailAndPassword, EmailAuthProvider, getAuth, inMemoryPersistence, reauthenticateWithCredential, setPersistence, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
+import { connectAuthEmulator, createUserWithEmailAndPassword, EmailAuthProvider, getAuth, inMemoryPersistence, reauthenticateWithCredential, setPersistence, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
 import { deleteDoc, getDoc, runTransaction, setDoc, writeBatch } from 'firebase/firestore';
 import { firebaseClient } from './client.ts';
 import { list, newId, ownDepartment, read, reference, requireAdmin, requireRow, scope, stamp, type Row } from './store.ts';
@@ -61,6 +61,7 @@ async function provisionSector(input: any, previous?: Row, password?: string) {
   passwordSchema.parse(password);
   const secondary = initializeApp(auth.app.options, `provision-${crypto.randomUUID()}`);
   const secondaryAuth = getAuth(secondary);
+  if (auth.emulatorConfig) connectAuthEmulator(secondaryAuth, `${auth.emulatorConfig.protocol}://${auth.emulatorConfig.host}:${auth.emulatorConfig.port}`, { disableWarnings: true });
   let created: Awaited<ReturnType<typeof createUserWithEmailAndPassword>> | undefined;
   try {
     await setPersistence(secondaryAuth, inMemoryPersistence);
@@ -70,6 +71,7 @@ async function provisionSector(input: any, previous?: Row, password?: string) {
     await runTransaction(db, async tx => {
       const login = await tx.get(reference(db, 'sectorLogins', data.code));
       const current = await read(db, 'departments', id, tx);
+      if (!previous && current) throw new Error('Identificador em uso. Tente cadastrar novamente.');
       if (login.exists() && (!current || current.code !== data.code)) throw new Error('Código de setor já cadastrado.');
       if (current?.accessUid) tx.update(reference(db, 'profiles', current.accessUid), { active: false });
       if (current?.code && current.code !== data.code) tx.delete(reference(db, 'sectorLogins', current.code));
@@ -117,6 +119,7 @@ async function saveEquipment(body: unknown, profile: Row, id = newId(), updating
     const related = new Map<number, Row>();
     for (const key of ids) { const row = await read(db, 'equipments', key, tx); if (row) related.set(key, row); }
     const current = related.get(id);
+    if (!updating && current) throw new Error('Identificador em uso. Tente cadastrar novamente.');
     if (updating && !current) throw new Error('Equipamento não encontrado.');
     if (updating && JSON.stringify(current?.linkedEquipmentIds ?? []) !== JSON.stringify(previous?.linkedEquipmentIds ?? [])) throw new Error('O vínculo foi alterado por outro acesso. Atualize a tela.');
     if (parentId) {
@@ -256,7 +259,7 @@ export async function firebaseFetch(url: string, options: RequestInit = {}): Pro
     if (route === '/movements/checkout' && method === 'POST') return json(await moveEquipment(body, profile, true), 201);
     if (route === '/movements/checkin' && method === 'POST') return json(await moveEquipment(body, profile, false), 201);
     const term = route.match(/^\/movements\/(\d+)\/term-pdf$/);
-    if (term) { requireAdmin(profile); const movement = requireRow(await read(db, 'movements', Number(term[1]))); const detail = await equipmentDetail(movement.equipmentId, profile); return pdf(await (await import('../shared/pdf.ts')).buildResponsibilityTermPdf({ movement: { ...movement, occurredAt: new Date(movement.occurredAt) }, equipment: detail.equipment } as any)); }
+    if (term) { requireAdmin(profile); const movement = requireRow(await read(db, 'movements', Number(term[1]))); if (movement.movementType !== 'SAIDA') throw new Error('Esta movimentação não possui termo de saída.'); const detail = await equipmentDetail(movement.equipmentId, profile); return pdf(await (await import('../shared/pdf.ts')).buildResponsibilityTermPdf({ movement: { ...movement, occurredAt: new Date(movement.occurredAt) }, equipment: detail.equipment, technicianName: movement.performedByName, technicianMatricula: 'TI', technicianEmail: '' } as any)); }
     if (route === '/incidents' && method === 'GET') return json((await list(db, 'incidents', ownDepartment(profile, Number(query.get('departmentId')) || undefined))).sort((a, b) => b.id - a.id));
     if (route === '/incidents' && method === 'POST') {
       const input = createIncidentSchema.parse(body); const departmentId = ownDepartment(profile, input.departmentId) || profile.departmentId;

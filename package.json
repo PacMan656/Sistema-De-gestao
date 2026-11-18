@@ -16,22 +16,19 @@
     "db:push": "drizzle-kit push --config src/db/drizzle.config.ts",
     "build:firebase": "vite build --mode firebase",
     "firebase:prepare": "node scripts/prepare-firebase.mjs",
-    "test:rules": "firebase emulators:exec --project demo-patriti --only firestore \"tsx --test tests/firebaseRules.rules.ts\"",
+    "test:rules": "node scripts/firebase-safe.mjs emulators:exec --project demo-patriti --only firestore \"node --import tsx --test tests/firebaseRules.rules.ts\"",
     "security:check": "node scripts/check-secrets.mjs",
     "security:build": "node scripts/check-secrets.mjs --dist",
     "desktop:build": "node scripts/build-desktop.mjs",
-    "desktop:pack": "electron-builder --config desktop/builder.cjs --win portable --publish never"
+    "desktop:pack": "electron-builder --config desktop/builder.cjs --win portable --publish never",
+    "firebase": "node scripts/firebase-safe.mjs",
+    "desktop:smoke": "node scripts/smoke-desktop.mjs",
+    "test:firebase": "node scripts/firebase-safe.mjs emulators:exec --project demo-patriti --only firestore,auth \"node scripts/test-firebase-api.mjs\""
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
     "@hookform/resolvers": "^7.0.7",
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/pdfkit": "^0.17.7",
-    "@types/pg": "^8.23.1",
-    "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.2.3",
-    "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.4",
     "express": "^4.21.2",
     "firebase": "^12.19.0",
@@ -45,7 +42,6 @@
     "react-hook-form": "^7.92.0",
     "socket.io": "^4.8.4",
     "socket.io-client": "^4.8.4",
-    "vite": "^8.3.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -61,8 +57,20 @@
     "firebase-tools": "^15.36.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "drizzle-kit": "^0.31.11",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.3.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pdfkit": "^0.17.7",
+    "@types/pg": "^8.23.1"
   },
   "description": "Invent?rio de TI e helpdesk por setor",
-  "author": "Equipe PatriTI"
+  "author": "Equipe PatriTI",
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6",
+    "@firebase/app": "0.16.7",
+    "@firebase/app-compat": "0.5.23"
+  }
 }

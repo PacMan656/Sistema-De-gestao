@@ -5,7 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { apiRouter } from './src/server/routes.ts';
 import { attachSocketServer } from './src/server/socket.ts';
-import { needsSetup, setupToken } from './src/server/setup.ts';
+import { needsSetup, setupToken, setupTokenPath } from './src/server/setup.ts';
+import { logFailure } from './src/server/safeLog.ts';
 import { closeDatabase } from './src/db/index.ts';
 import { apiNotFound, apiErrorHandler } from './src/server/apiBoundary.ts';
 
@@ -13,8 +14,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function bootstrap() {
-  if (await needsSetup()) {
-    console.log(`Primeiro acesso: crie o administrador de TI na página de login. Código de configuração: ${setupToken}`);
+  const firstSetup = await needsSetup();
+  if (firstSetup && process.env.PATRITI_DESKTOP !== '1') {
+    console.log(`Primeiro acesso: consulte o código de configuração no arquivo local ${setupTokenPath}.`);
   }
   const app = express();
   app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
@@ -42,23 +44,29 @@ async function bootstrap() {
     });
     app.use(vite.middlewares);
   } else {
-    const distDir = path.resolve(__dirname, 'dist');
+    const distDir = path.resolve(process.env.PATRITI_ROOT_DIR || __dirname, 'dist');
     app.use(express.static(distDir));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distDir, 'index.html'));
     });
   }
 
-  const PORT = Number(process.env.PORT) || 3000;
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`PatriTI server running on http://localhost:${PORT}`);
+  const PORT = process.env.PORT === undefined ? 3000 : Number(process.env.PORT);
+  server.listen(PORT, process.env.HOST || '0.0.0.0', () => {
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : PORT;
+    console.log(`PatriTI server running on http://localhost:${port}`);
+    const parentPort = (process as unknown as { parentPort?: { postMessage(data: unknown): void } }).parentPort;
+    parentPort?.postMessage({ type: 'ready', port, setupToken: firstSetup ? setupToken : null });
   });
   const shutdown = () => sockets.close(() => { void closeDatabase().then(() => process.exit(0)); });
+  const parentPort = (process as unknown as { parentPort?: { on(name: string, callback: (event: { data?: unknown }) => void): void } }).parentPort;
+  parentPort?.on('message', event => { if (event.data === 'shutdown') shutdown(); });
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 }
 
 bootstrap().catch((err) => {
-  console.error('Failed to start server:', err);
+  logFailure('server.start', err);
   process.exit(1);
 });

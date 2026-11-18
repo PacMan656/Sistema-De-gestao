@@ -14,4 +14,4 @@ const config = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
 config.hosting.public = '../dist'; config.firestore.rules = 'firestore.deploy.rules';
 fs.writeFileSync('.firebase/deploy.json', JSON.stringify(config, null, 2));
 fs.writeFileSync('.firebase/project.json', JSON.stringify({ project, adminUid: uid }));
-console.log(`Preparado para ${project}. O UID inicial foi fixado nas regras locais ignoradas pelo Git.\nDepois de npm run build:firebase, publique com:\nnpx firebase deploy --project ${project} --config .firebase/deploy.json --only hosting,firestore:rules`);
+console.log(`Preparado para ${project}. O UID inicial foi fixado nas regras locais ignoradas pelo Git.\nDepois de npm run build:firebase, publique com:\nnpm run firebase -- deploy --project ${project} --config .firebase/deploy.json --only hosting,firestore:rules`);

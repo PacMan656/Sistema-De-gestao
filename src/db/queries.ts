@@ -1,4 +1,5 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { logFailure } from '../server/safeLog.ts';
 import { db } from '../db/index.ts';
 import { InventoryValidationError } from './inventory.ts';
 import {
@@ -24,7 +25,7 @@ function wrapDbError(context: string, error: unknown): Error {
   const detail = cause instanceof Error ? cause.message : error instanceof Error ? error.message : '';
   if (error instanceof InventoryValidationError) return error;
   if (detail.startsWith('Vinculo:')) return new InventoryValidationError(detail.replace('Vinculo:', '').trim());
-  console.error(`[DB Error] ${context}:`, error);
+  logFailure(`db.${context}`, error);
   if (
     typeof error === 'object' &&
     error !== null &&

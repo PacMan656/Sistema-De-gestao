@@ -38,7 +38,7 @@ export function LoginScreen() {
           finally { setBusy(false); }
         }}>
           {(error || authError) && <p role="alert" className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm">{error || authError}</p>}
-          {setup && !isLocalMode && <label className="block text-sm font-medium">Código de configuração<input name="setupToken" required autoComplete="off" className="form-input mt-1.5" /><span className="block text-xs text-slate-500 mt-1">Consulte o código exibido no terminal do servidor.</span></label>}
+          {setup && !isLocalMode && <label className="block text-sm font-medium">Código de configuração<input name="setupToken" required autoComplete="off" className="form-input mt-1.5" /><span className="block text-xs text-slate-500 mt-1">Consulte o arquivo data/.setup-token no servidor ou o aviso de primeiro acesso no aplicativo Windows.</span></label>}
           <label className="block text-sm font-medium" htmlFor="login-sector">Código do setor</label>
           <input id="login-sector" name="sector" value={sector} onChange={(event) => setSector(event.target.value.toUpperCase())} required maxLength={24} autoComplete="username" autoCapitalize="characters" readOnly={setup} placeholder="Ex.: TI, RH, FIN" className="form-input uppercase" />
           <label className="block text-sm font-medium" htmlFor="login-password">Senha do setor</label>

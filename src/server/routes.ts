@@ -1,3 +1,4 @@
+import { logFailure } from './safeLog.ts';
 import { Router } from 'express';
 import { accountRouter, sendSession } from './accountRoutes.ts';
 import { sectorRouter } from './sectorRoutes.ts';
@@ -862,7 +863,7 @@ apiRouter.get(
       res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
       return res.send(pdfBuffer);
     } catch (error) {
-      console.error('PDF generation error:', error);
+      logFailure('pdf.generate', error);
       return res.status(500).json({ error: 'Erro ao gerar PDF do termo.' });
     }
   }

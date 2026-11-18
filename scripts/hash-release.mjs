@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+const file = 'release/PatriTI-1.0.0-Windows-x64.exe';
+const header = Buffer.alloc(2); const fd = fs.openSync(file, 'r'); fs.readSync(fd, header, 0, 2, 0); fs.closeSync(fd);
+if (header.toString() !== 'MZ') throw new Error('Invalid Windows executable.');
+const hash = createHash('sha256');
+for await (const chunk of fs.createReadStream(file)) hash.update(chunk);
+const sum = hash.digest('hex');
+fs.writeFileSync('release/SHA256SUMS.txt', `${sum}  PatriTI-1.0.0-Windows-x64.exe\n`);
+console.log(JSON.stringify({ executable: file, bytes: fs.statSync(file).size, sha256: sum }));

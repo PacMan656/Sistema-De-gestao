@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
         resolveId(source, importer) {
           if (!importer || !source.startsWith('.')) return;
           const target = path.resolve(path.dirname(importer.split('?')[0]), source);
+          if (mode !== 'firebase' && ['src/firebase/api.ts', 'src/firebase/socket.ts'].some(file => target === path.resolve(import.meta.dirname, file))) return path.resolve(import.meta.dirname, 'src/firebase/disabled.ts');
           if (!local) {
             if (target === path.resolve(import.meta.dirname, 'src/browser/runtime.ts')) return path.resolve(import.meta.dirname, 'src/browser/disabled.ts');
             return;

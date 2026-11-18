@@ -1,3 +1,4 @@
+import { logFailure } from './safeLog.ts';
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
 import { eq, sql } from 'drizzle-orm';
@@ -14,7 +15,7 @@ import { disconnectUserSockets } from './socket.ts';
 
 export const accountRouter = Router();
 const cookieName = 'patriti_session';
-const cookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' as const, path: '/api/auth', maxAge: 12 * 60 * 60 * 1000 };
+const cookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === 'production' && process.env.PATRITI_DESKTOP !== '1', sameSite: 'strict' as const, path: '/api/auth', maxAge: 12 * 60 * 60 * 1000 };
 const { maxAge: _maxAge, ...clearCookieOptions } = cookieOptions;
 const attempts = new Map<string, { count: number; expires: number }>();
 const dummyHash = hashPassword('invalid-account-password');
@@ -75,7 +76,7 @@ accountRouter.post('/auth/login', sameOrigin, async (req, res) => {
     attempts.delete(key);
     return sendSession(res, user);
   } catch (error) {
-    console.error('Login failed:', error);
+    logFailure('auth.login', error);
     return res.status(503).json({ error: 'Não foi possível acessar o banco de dados. Solicite ao TI a verificação da configuração.' });
   }
 });
@@ -123,7 +124,7 @@ accountRouter.post('/users', requireAuth, requireAdminTI, async (req: AuthReques
     if ((error as { code?: string }).code === '23505' || (cause as { code?: string } | undefined)?.code === '23505') return res.status(409).json({ error: 'Já existe um usuário com esse e-mail.' });
     if (message.startsWith('Já existe')) return res.status(409).json({ error: message });
     if (message.startsWith('Selecione')) return res.status(400).json({ error: message });
-    console.error('Create account failed:', error);
+    logFailure('auth.create', error);
     return res.status(500).json({ error: 'Não foi possível cadastrar o usuário.' });
   }
 });

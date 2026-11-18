@@ -1,3 +1,4 @@
+import { logFailure } from '../safeLog.ts';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'node:crypto';
@@ -86,13 +87,10 @@ export async function requireAuth(
   next: NextFunction
 ) {
   const authHeader = req.headers.authorization;
-  const queryToken =
-    typeof req.query.token === 'string' ? req.query.token : undefined;
-
   const token =
     authHeader && authHeader.startsWith('Bearer ')
       ? authHeader.slice('Bearer '.length).trim()
-      : queryToken;
+      : undefined;
 
   if (!token) {
     return res.status(401).json({ error: 'Não autorizado: Token ausente.' });
@@ -102,7 +100,7 @@ export async function requireAuth(
     req.appUser = await authenticateToken(token);
     return next();
   } catch (error) {
-    console.error('Auth verification failed:', error);
+    logFailure('auth.verify', error);
     return res
       .status(401)
       .json({ error: 'Não autorizado: Token inválido ou expirado.' });

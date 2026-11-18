@@ -8,6 +8,8 @@ const patterns = [
   ['Private key', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
   ['GitHub credential', /(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,})/g],
   ['AWS credential', /AKIA[0-9A-Z]{16}/g],
+  ['OAuth refresh credential', /1\/\/[A-Za-z0-9_-]{45,}/g],
+  ['OAuth access credential', /ya29\.[A-Za-z0-9._-]{45,}/g],
 ];
 const findings = [];
 function scan(file, content) {
@@ -18,7 +20,7 @@ function scan(file, content) {
 const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
 for (const file of files) {
   if (!fs.existsSync(file)) continue;
-  if (/(^|\/)\.env(?!\.example$|\.firebase\.example$)|service[-_]?account.*\.json$|firebase-adminsdk|\.session-secret|\.(pem|key)$/i.test(file)) findings.push({ file, kind: 'Sensitive filename' });
+  if (/(^|\/)\.env(?!\.example$|\.firebase\.example$)|service[-_]?account.*\.json$|firebase-adminsdk|\.session-secret|\.setup-token|\.(pem|key)$/i.test(file)) findings.push({ file, kind: 'Sensitive filename' });
   if (!/\.(png|jpe?g|gif|ico|woff2?|pdf|zip|exe)$/.test(file) && file !== 'package-lock.json') scan(file, fs.readFileSync(file, 'utf8'));
 }
 if (process.argv.includes('--dist')) {
