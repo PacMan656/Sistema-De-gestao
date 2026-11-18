@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .form-input {
+    @apply w-full min-w-0 min-h-11 px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 disabled:opacity-60;
+  }
+}
+
+#root { min-height: 100dvh; }
+button, input, select, textarea { touch-action: manipulation; }
+button:not(:disabled) { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+input, select, textarea { max-width: 100%; }
+button:focus-visible, a:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.pwa-status { padding-top: max(.5rem, env(safe-area-inset-top)); }
+.workspace-shell { min-height: 100dvh; }
+.workspace-shell main { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.workspace-shell .grid > * { min-width: 0; }
+.workspace-shell main p { overflow-wrap: anywhere; }
+.overflow-x-auto { max-width: 100%; overscroll-behavior-x: contain; }
+.overflow-x-auto table { min-width: 640px; }
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px !important; }
+  .workspace-shell header { padding-inline: 1rem; gap: .75rem; }
+  .workspace-shell main { padding-inline: 1rem; }
+  .workspace-shell main > div { min-width: 0; }
+  [role="dialog"] { max-height: 94dvh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
