@@ -1,5 +1,6 @@
 import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { isLocalMode } from '../lib/runtime.ts';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -22,7 +23,7 @@ export function PwaStatus() {
     let reloading = false;
     const controllerChanged = () => { if (updating.current && !reloading) { reloading = true; location.reload(); } };
     if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((registration) => {
+      navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', { updateViaCache: 'none' }).then((registration) => {
         if (disposed) return;
         if (registration.waiting) setWaiting(registration.waiting);
         registration.addEventListener('updatefound', () => {
@@ -44,7 +45,7 @@ export function PwaStatus() {
   if (installed && !offline && !waiting) return null;
   return <div className="pwa-status border-b border-slate-200 bg-white px-4 py-2 text-xs">
     <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-2">
-      {offline ? <p role="status" className="inline-flex items-center gap-2 text-amber-800"><WifiOff size={16} />Sem conexão. Login e alterações precisam de acesso ao servidor.</p> : <span className="text-slate-500">PatriTI no seu computador, tablet ou celular</span>}
+      {offline ? <p role="status" className="inline-flex items-center gap-2 text-amber-800"><WifiOff size={16} />{isLocalMode ? 'Sem internet. Seus dados locais continuam disponíveis.' : 'Sem conexão. Login e alterações precisam de acesso ao servidor.'}</p> : <span className="text-slate-500">PatriTI no seu computador, tablet ou celular</span>}
       <div className="flex flex-wrap gap-3">
         {waiting && <button type="button" onClick={() => { updating.current = true; waiting.postMessage({ type: 'SKIP_WAITING' }); }} className="inline-flex items-center gap-1.5 min-h-9 text-blue-700 font-semibold"><RefreshCw size={14} />Atualização disponível — recarregar</button>}
         {!installed && <button type="button" onClick={async () => {

@@ -2,7 +2,11 @@
 
 Inventário de TI e helpdesk corporativo com login por código do setor e senha, setores gerenciados pelo TI e aplicativo PWA.
 
-Para colocar o sistema completo online, siga [Publicar o PatriTI](DEPLOY.md). A configuração inclui interface, login, API, chat e banco persistente em um serviço Node.js.
+**Edição local para GitHub Pages:** https://pacman656.github.io/Sistema-De-gestao/
+
+A edição do Pages guarda os dados somente neste navegador, sem compartilhamento entre dispositivos e sem autenticação protegida por servidor. Ela inclui cadastro de setores, validação local de senhas, inventário, vínculos, movimentações, chamados locais, PDFs e backup. Consulte [Publicar e usar a edição local](DEPLOY.md).
+
+As instruções abaixo se referem à versão opcional com servidor Node.js.
 
 ## Começar neste computador
 

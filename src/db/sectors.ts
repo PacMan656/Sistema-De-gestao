@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../shared/random.ts';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from './index.ts';
 import { departments, equipments, users } from './schema.ts';

@@ -130,7 +130,7 @@ export function PdfPreviewModal({
         <div className="flex-1 bg-slate-100 p-4 overflow-hidden">
           {loading && (
             <div className="w-full h-full flex items-center justify-center text-sm text-slate-600">
-              Gerando documento PDF assinado no servidor...
+              Gerando documento PDF...
             </div>
           )}
           {error && (

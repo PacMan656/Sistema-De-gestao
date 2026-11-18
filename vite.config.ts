@@ -5,16 +5,40 @@ import path from 'path';
 import { createHash } from 'node:crypto';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const local = mode === 'pages';
+  const base = process.env.VITE_BASE_PATH || (local ? '/Sistema-De-gestao/' : '/');
   return {
+    base,
+    build: { target: 'es2022' },
+    optimizeDeps: { exclude: local ? ['@electric-sql/pglite'] : [] },
+    worker: { format: 'es' },
     plugins: [
+      {
+        name: 'patriti-browser-storage',
+        enforce: 'pre',
+        resolveId(source, importer) {
+          if (!importer || !source.startsWith('.')) return;
+          const target = path.resolve(path.dirname(importer.split('?')[0]), source);
+          if (!local) {
+            if (target === path.resolve(import.meta.dirname, 'src/browser/runtime.ts')) return path.resolve(import.meta.dirname, 'src/browser/disabled.ts');
+            return;
+          }
+          if (target === path.resolve(import.meta.dirname, 'src/db/index.ts')) return path.resolve(import.meta.dirname, 'src/browser/db.ts');
+          if (target === path.resolve(import.meta.dirname, 'src/server/services/passwordService.ts')) return path.resolve(import.meta.dirname, 'src/browser/passwordService.ts');
+        },
+      },
       react(),
       tailwindcss(),
       {
         name: 'patriti-pwa',
         apply: 'build',
         generateBundle(_options, bundle) {
-          const assets = ['/', '/offline.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/maskable-512.png', '/icons/apple-touch-icon.png', ...Object.keys(bundle).filter((file) => /\.(js|css|woff2?)$/.test(file)).map((file) => `/${file}`)];
+          const assets = [base, ...['offline.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'].map((file) => base + file), ...Object.keys(bundle).filter((file) => !file.endsWith('.map')).map((file) => base + file)];
+          const manifest = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'public/manifest.webmanifest'), 'utf8'));
+          manifest.id = base; manifest.start_url = base; manifest.scope = base;
+          manifest.icons = manifest.icons.map((icon: { src: string }) => ({ ...icon, src: base + icon.src.replace(/^\//, '') }));
+          this.emitFile({ type: 'asset', fileName: 'manifest.webmanifest', source: JSON.stringify(manifest, null, 2) });
           const template = fs.readFileSync(path.join(import.meta.dirname, 'pwa/service-worker.js'), 'utf8');
           const version = createHash('sha256').update(JSON.stringify(assets)).update(template).digest('hex').slice(0, 16);
           this.emitFile({ type: 'asset', fileName: 'sw.js', source: template.replace('__BUILD_VERSION__', version).replace('__PRECACHE_ASSETS__', JSON.stringify(assets)) });
@@ -36,12 +60,17 @@ export default defineConfig(() => {
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
           }
+          if (local && fs.existsSync(path.join(distDir, 'index.html'))) {
+            fs.copyFileSync(path.join(distDir, 'index.html'), path.join(distDir, '404.html'));
+            fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
+          }
         },
       },
     ],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
+        ...(local ? { pdfkit: path.resolve(import.meta.dirname, 'node_modules/pdfkit/js/pdfkit.standalone.js') } : {}),
       },
     },
     server: {

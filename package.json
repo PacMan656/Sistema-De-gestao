@@ -7,6 +7,8 @@
     "dev": "tsx watch server.ts",
     "start": "node --import tsx scripts/start.mjs",
     "build": "vite build",
+    "build:pages": "vite build --mode pages",
+    "preview:pages": "vite preview --mode pages --host 127.0.0.1",
     "preview": "npm run start",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",

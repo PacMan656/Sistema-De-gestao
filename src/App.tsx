@@ -36,6 +36,8 @@ import {
 } from './components/StatusText.tsx';
 import { SectorAdminView } from './components/SectorAdminView.tsx';
 import { SectorInventoryView } from './components/SectorInventoryView.tsx';
+import { LocalDataControls } from './components/LocalDataControls.tsx';
+import { isLocalMode } from './lib/runtime.ts';
 import { ChangePassword } from './components/ChangePassword.tsx';
 import { PwaStatus } from './components/PwaStatus.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
@@ -419,7 +421,7 @@ function WorkspaceApp() {
                   connected ? 'bg-emerald-500' : 'bg-amber-500'
                 }`}
               />
-              <span>{connected ? 'Tempo Real Conectado' : 'Conectando...'}</span>
+              <span>{isLocalMode ? 'Dados neste navegador' : connected ? 'Tempo Real Conectado' : 'Conectando...'}</span>
             </span>
 
             {isAdmin ? (
@@ -1192,6 +1194,7 @@ export default function App() {
   return (
     <><PwaStatus />
     <AuthProvider>
+      <LocalDataControls />
       <SocketProvider>
         <SessionWorkspace />
       </SocketProvider>

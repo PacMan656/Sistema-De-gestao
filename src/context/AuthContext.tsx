@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { apiFetch } from '../lib/api.ts';
 import { readJsonResponse } from '../lib/jsonResponse.ts';
+import { appFetch } from '../lib/runtime.ts';
 import type { OnboardingInput } from '../shared/validation.ts';
 import type { AppUser, Department } from '../types/domain.ts';
 
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const response = await fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' });
+        const response = await appFetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' });
         if (response.ok) {
           const session = await readJsonResponse<Session>(response);
           if (!cancelled) await acceptSession(session);
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithPassword = async (sector: string, password: string) => {
     setAuthError(null);
     try {
-      const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sector, password }) });
+      const response = await appFetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sector, password }) });
       const data = await readJsonResponse<Session>(response);
       await acceptSession(data);
     } catch (error) {
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   const logout = async () => {
-    try { await fetch('/api/auth/logout', { method: 'POST', headers: idToken ? { Authorization: `Bearer ${idToken}` } : {} }); }
+    try { await appFetch('/api/auth/logout', { method: 'POST', headers: idToken ? { Authorization: `Bearer ${idToken}` } : {} }); }
     finally {
       clearSession();
 

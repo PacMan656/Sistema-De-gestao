@@ -15,6 +15,8 @@ import type {
   PresenceUser,
 } from '../types/domain.ts';
 import { useAuth } from './AuthContext.tsx';
+import { isLocalMode } from '../lib/runtime.ts';
+import { createLocalSocket } from '../browser/socket.ts';
 
 interface SocketContextValue {
   connected: boolean;
@@ -79,7 +81,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const socket = io({
+    const socket = isLocalMode ? createLocalSocket(rbacToken, appUser) : io({
       path: '/socket.io',
       auth: {
         token: rbacToken,

@@ -18,7 +18,7 @@ self.addEventListener('fetch', (event) => {
   // Corporate records, credentials, APIs, PDFs and socket traffic never enter caches.
   if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io') || request.headers.has('Authorization')) return;
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(async () => (await caches.match('/')) || (await caches.match('/offline.html'))));
+    event.respondWith(fetch(request).catch(async () => (await caches.match(ASSETS[0])) || (await caches.match(ASSETS[0] + 'offline.html'))));
     return;
   }
   if (ASSETS.includes(url.pathname)) event.respondWith(caches.match(url.pathname).then((cached) => cached || fetch(request)));

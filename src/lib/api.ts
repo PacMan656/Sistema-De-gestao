@@ -1,4 +1,5 @@
 import { readJsonResponse } from './jsonResponse.ts';
+import { appFetch } from './runtime.ts';
 
 export async function apiFetch<T>(
   url: string,
@@ -12,7 +13,7 @@ export async function apiFetch<T>(
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(url, {
+  const response = await appFetch(url, {
     ...options,
     headers,
   });
@@ -26,7 +27,7 @@ export async function fetchAuthorizedPdfBlobUrl(
   token: string,
   fallbackError = 'Não foi possível gerar o documento PDF.'
 ): Promise<string> {
-  const response = await fetch(url, {
+  const response = await appFetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -82,7 +83,7 @@ export async function downloadInventoryExport(
     params.set('departmentId', filters.departmentId);
   }
 
-  const response = await fetch(`/api/equipments/export?${params.toString()}`, {
+  const response = await appFetch(`/api/equipments/export?${params.toString()}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

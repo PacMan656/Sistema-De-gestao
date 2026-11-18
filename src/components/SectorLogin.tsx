@@ -2,6 +2,7 @@ import { Eye, EyeOff, MonitorCheck, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { readJsonResponse } from '../lib/jsonResponse.ts';
+import { appFetch, isLocalMode } from '../lib/runtime.ts';
 
 export function LoginScreen() {
   const { loginWithPassword, authError } = useAuth();
@@ -12,7 +13,7 @@ export function LoginScreen() {
   const [setup, setSetup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    fetch('/api/auth/setup', { cache: 'no-store' }).then((response) => readJsonResponse<{ required: boolean }>(response)).then((data) => {
+    appFetch('/api/auth/setup', { cache: 'no-store' }).then((response) => readJsonResponse<{ required: boolean }>(response)).then((data) => {
       setSetup(data.required === true); if (data.required) setSector('TI');
     }).catch((error) => setError(error instanceof Error ? error.message : 'Não foi possível verificar o servidor.'));
   }, []);
@@ -28,7 +29,7 @@ export function LoginScreen() {
           try {
             if (setup) {
               if (form.get('confirmPassword') !== password) throw new Error('As senhas não conferem.');
-              const response = await fetch('/api/auth/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setupToken: form.get('setupToken'), password }) });
+              const response = await appFetch('/api/auth/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setupToken: form.get('setupToken'), password }) });
               await readJsonResponse(response);
               setSetup(false);
             }
@@ -37,7 +38,7 @@ export function LoginScreen() {
           finally { setBusy(false); }
         }}>
           {(error || authError) && <p role="alert" className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm">{error || authError}</p>}
-          {setup && <label className="block text-sm font-medium">Código de configuração<input name="setupToken" required autoComplete="off" className="form-input mt-1.5" /><span className="block text-xs text-slate-500 mt-1">Consulte o código exibido no terminal do servidor.</span></label>}
+          {setup && !isLocalMode && <label className="block text-sm font-medium">Código de configuração<input name="setupToken" required autoComplete="off" className="form-input mt-1.5" /><span className="block text-xs text-slate-500 mt-1">Consulte o código exibido no terminal do servidor.</span></label>}
           <label className="block text-sm font-medium" htmlFor="login-sector">Código do setor</label>
           <input id="login-sector" name="sector" value={sector} onChange={(event) => setSector(event.target.value.toUpperCase())} required maxLength={24} autoComplete="username" autoCapitalize="characters" readOnly={setup} placeholder="Ex.: TI, RH, FIN" className="form-input uppercase" />
           <label className="block text-sm font-medium" htmlFor="login-password">Senha do setor</label>

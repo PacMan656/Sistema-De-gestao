@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { apiFetch } from '../lib/api.ts';
+import { appFetch } from '../lib/runtime.ts';
 import type { EquipmentItem, RemoteSessionRecord } from '../types/domain.ts';
 
 interface RemoteConsoleModalProps {
@@ -160,7 +161,7 @@ export function RemoteConsoleModal({
       setSessions(res.sessions);
 
       // Also fetch formatted Test Page PDF for browser/USB local print
-      const pdfRes = await fetch(`/api/equipments/${equipment.id}/test-page-pdf`, {
+      const pdfRes = await appFetch(`/api/equipments/${equipment.id}/test-page-pdf`, {
         headers: { Authorization: `Bearer ${idToken}` },
       });
       if (pdfRes.ok) {

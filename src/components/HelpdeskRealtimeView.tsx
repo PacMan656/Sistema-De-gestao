@@ -14,6 +14,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useSocket } from '../context/SocketContext.tsx';
 import { apiFetch } from '../lib/api.ts';
+import { isLocalMode } from '../lib/runtime.ts';
 import {
   createIncidentSchema,
   INCIDENT_PRIORITIES,
@@ -208,7 +209,7 @@ export function HelpdeskRealtimeView() {
                     connected ? 'bg-emerald-500' : 'bg-amber-500'
                   }`}
                 />
-                <span>{connected ? 'Socket Ativo' : 'Reconectando'}</span>
+                <span>{isLocalMode ? 'Histórico local' : connected ? 'Socket Ativo' : 'Reconectando'}</span>
               </span>
             </div>
 
