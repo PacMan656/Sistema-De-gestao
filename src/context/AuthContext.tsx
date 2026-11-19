@@ -4,6 +4,7 @@ import { readJsonResponse } from '../lib/jsonResponse.ts';
 import { appFetch, isFirebaseMode } from '../lib/runtime.ts';
 import type { OnboardingInput } from '../shared/validation.ts';
 import type { AppUser, Department } from '../types/domain.ts';
+import type { SharedWorkspaceSnapshot } from '../firebase/workspace.ts';
 
 type Session = { user: AppUser; rbacToken: string };
 interface AuthContextValue {
@@ -13,6 +14,9 @@ interface AuthContextValue {
   rbacToken: string | null;
   loading: boolean;
   authError: string | null;
+  sharedWorkspace: SharedWorkspaceSnapshot | null;
+  sharedConnected: boolean;
+  sharedError: string | null;
   loginWithPassword: (sector: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   submitOnboarding: (data: OnboardingInput) => Promise<void>;
@@ -27,10 +31,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [sharedWorkspace, setSharedWorkspace] = useState<SharedWorkspaceSnapshot | null>(null);
+  const [sharedConnected, setSharedConnected] = useState(false);
+  const [sharedError, setSharedError] = useState<string | null>(null);
 
   const clearSession = useCallback(() => {
-    setAppUser(null); setIdToken(null); setDepartments([]);
+    setAppUser(null); setIdToken(null); setDepartments([]); setSharedWorkspace(null); setSharedConnected(false); setSharedError(null);
   }, []);
+  useEffect(() => {
+    if (!isFirebaseMode || !appUser) return;
+    let disposed = false; let stop: (() => void) | undefined;
+    Promise.all([import('../firebase/client.ts'), import('../firebase/workspace.ts')]).then(async ([client, live]) => {
+      const { db } = await client.firebaseClient(); if (disposed) return;
+      stop = live.watchSharedWorkspace(db, appUser, {
+        data: snapshot => { if (!disposed) { setSharedWorkspace(snapshot); setDepartments(snapshot.departments); setSharedError(null); } },
+        connection: value => { if (!disposed) setSharedConnected(value); },
+        profile: profile => {
+          if (!disposed) setAppUser(current => current && Object.entries(profile).every(([key, value]) => current[key as keyof AppUser] === value) ? current : profile);
+        },
+        revoked: () => {
+          if (disposed) return;
+          clearSession();
+          void appFetch('/api/auth/logout', { method: 'POST' }).finally(() => location.reload());
+        },
+        error: () => { if (!disposed) setSharedError('Não foi possível sincronizar os dados. Verifique a conexão e seu acesso.'); },
+      });
+    }).catch(() => { if (!disposed) setSharedError('Não foi possível iniciar a sincronização.'); });
+    return () => { disposed = true; stop?.(); };
+  }, [appUser?.uid, appUser?.departmentId, appUser?.role, clearSession]);
   const acceptSession = useCallback(async (session: Session) => {
     const depts = await apiFetch<Department[]>('/api/departments', session.rbacToken);
     setDepartments(depts); setIdToken(session.rbacToken); setAppUser(session.user); setAuthError(null);
@@ -87,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!idToken) throw new Error('Sessão não autenticada.');
     await acceptSession(await apiFetch<Session>('/api/auth/password', idToken, { method: 'POST', body: JSON.stringify({ currentPassword, password }) }));
   };
-  return <AuthContext.Provider value={{ appUser, departments, idToken, rbacToken: idToken, loading, authError, loginWithPassword, logout, submitOnboarding, refreshProfile, changePassword }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ appUser, departments, idToken, rbacToken: idToken, loading, authError, sharedWorkspace, sharedConnected, sharedError, loginWithPassword, logout, submitOnboarding, refreshProfile, changePassword }}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
   const value = useContext(AuthContext);

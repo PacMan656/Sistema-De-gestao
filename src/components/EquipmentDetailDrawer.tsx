@@ -40,7 +40,8 @@ export function EquipmentDetailDrawer({
   onOpenRemoteConsole,
   onOpenBarcodeLabel,
 }: EquipmentDetailDrawerProps) {
-  const { idToken, appUser } = useAuth();
+  const { idToken, appUser, sharedWorkspace } = useAuth();
+  const sharedEquipmentVersion = JSON.stringify(sharedWorkspace?.equipments.find(item => item.id === equipmentId));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<{
@@ -82,7 +83,7 @@ export function EquipmentDetailDrawer({
     return () => {
       active = false;
     };
-  }, [equipmentId, idToken]);
+  }, [equipmentId, idToken, sharedEquipmentVersion]);
 
   if (!equipmentId) return null;
 

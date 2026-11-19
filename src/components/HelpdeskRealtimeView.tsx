@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useSocket } from '../context/SocketContext.tsx';
 import { apiFetch } from '../lib/api.ts';
-import { isLocalMode } from '../lib/runtime.ts';
+import { isLocalMode, isFirebaseMode } from '../lib/runtime.ts';
 import {
   createIncidentSchema,
   INCIDENT_PRIORITIES,
@@ -32,7 +32,7 @@ interface SectorAssetOption {
 }
 
 export function HelpdeskRealtimeView() {
-  const { appUser, departments, idToken } = useAuth();
+  const { appUser, departments, idToken, sharedWorkspace } = useAuth();
   const {
     connected,
     onlineUsers,
@@ -62,12 +62,13 @@ export function HelpdeskRealtimeView() {
 
   useEffect(() => {
     if (!idToken) return;
+    if (isFirebaseMode) { if (sharedWorkspace) setSectorAssets(sharedWorkspace.equipments); return; }
     apiFetch<SectorAssetOption[]>('/api/incidents/sector-assets', idToken)
       .then((rows) => setSectorAssets(rows))
       .catch(() => {
         // Optional lookup; ignore errors
       });
-  }, [idToken]);
+  }, [idToken, sharedWorkspace]);
 
   useEffect(() => {
     if (appUser?.departmentId && !isAdmin) {

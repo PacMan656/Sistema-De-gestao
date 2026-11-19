@@ -22,8 +22,10 @@ export function createFirebaseSocket(user: AppUser): Socket {
   void firebaseClient().then(({ db }) => {
     if (closed) return;
     const source = collection(db, 'incidents'); let first = true;
-    subscriptions.push(onSnapshot(user.role === 'admin_ti' ? source : query(source, where('departmentId', '==', user.departmentId)), snapshot => {
+    subscriptions.push(onSnapshot(user.role === 'admin_ti' ? source : query(source, where('departmentId', '==', user.departmentId)), { includeMetadataChanges: true }, snapshot => {
+      if (snapshot.metadata.fromCache) { fire('disconnect'); return; }
       fire('connect');
+      if (snapshot.metadata.hasPendingWrites) return;
       if (!first) for (const change of snapshot.docChanges()) {
         if (change.type === 'added') fire('incident:notify_ti', change.doc.data());
         if (change.type === 'modified') fire('incident:status_update', change.doc.data());

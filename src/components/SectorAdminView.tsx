@@ -3,9 +3,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { apiFetch } from '../lib/api.ts';
 import type { Department } from '../types/domain.ts';
+import { isFirebaseMode } from '../lib/runtime.ts';
 
 export function SectorAdminView() {
-  const { idToken, appUser, refreshProfile } = useAuth();
+  const { idToken, appUser, refreshProfile, sharedWorkspace } = useAuth();
   const [sectors, setSectors] = useState<Department[]>([]);
   const [editing, setEditing] = useState<Department | 'new' | null>(null);
   const [passwordSector, setPasswordSector] = useState<Department | null>(null);
@@ -14,9 +15,10 @@ export function SectorAdminView() {
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     if (!idToken) return;
+    if (isFirebaseMode) { if (sharedWorkspace) setSectors(sharedWorkspace.departments); return; }
     try { setSectors(await apiFetch<Department[]>('/api/departments', idToken)); }
     catch (error) { setError(error instanceof Error ? error.message : 'Erro ao listar setores.'); }
-  }, [idToken]);
+  }, [idToken, sharedWorkspace]);
   useEffect(() => { void load(); }, [load]);
   const save = async (url: string, method: string, body: unknown, message: string) => {
     if (!idToken) return;

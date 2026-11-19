@@ -1,4 +1,4 @@
-name: Publish local edition to GitHub Pages
+name: Publish shared gateway and local backups
 
 on:
   push:

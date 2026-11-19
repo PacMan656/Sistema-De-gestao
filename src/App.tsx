@@ -37,7 +37,10 @@ import {
 import { SectorAdminView } from './components/SectorAdminView.tsx';
 import { SectorInventoryView } from './components/SectorInventoryView.tsx';
 import { LocalDataControls } from './components/LocalDataControls.tsx';
-import { isLocalMode } from './lib/runtime.ts';
+import { isLocalMode, isFirebaseMode } from './lib/runtime.ts';
+import { SharedAccessGateway } from './components/SharedAccessGateway.tsx';
+import { SharedDataStatus } from './components/SharedDataStatus.tsx';
+import { LOCAL_BACKUP_PARAMETER } from './shared/deployment.ts';
 import { ChangePassword } from './components/ChangePassword.tsx';
 import { PwaStatus } from './components/PwaStatus.tsx';
 import { PrivacyNotice } from './components/PrivacyNotice.tsx';
@@ -58,15 +61,20 @@ import type {
 type NavTab = 'overview' | 'inventory' | 'movements' | 'helpdesk' | 'users';
 
 function WorkspaceApp() {
-  const { appUser, departments, idToken, loading, logout } = useAuth();
+  const { appUser, departments, idToken, loading, logout, sharedWorkspace, sharedError } = useAuth();
   const { connected, liveAlerts, dismissAlert } = useSocket();
 
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
-  const [movements, setMovements] = useState<MovementRecord[]>([]);
-  const [incidents, setIncidents] = useState<IncidentItem[]>([]);
+  const [loadedEquipments, setEquipments] = useState<EquipmentItem[]>([]);
+  const [loadedMovements, setMovements] = useState<MovementRecord[]>([]);
+  const [loadedIncidents, setIncidents] = useState<IncidentItem[]>([]);
+  // Read shared data directly from the current session. Logging in as another
+  // sector must never display rows retained by the previous session's UI state.
+  const equipments = isFirebaseMode ? sharedWorkspace?.equipments ?? [] : loadedEquipments;
+  const movements = isFirebaseMode ? sharedWorkspace?.movements ?? [] : loadedMovements;
+  const incidents = isFirebaseMode ? sharedWorkspace?.incidents ?? [] : loadedIncidents;
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [exportingFormat, setExportingFormat] = useState<'csv' | 'pdf' | null>(
@@ -105,6 +113,10 @@ function WorkspaceApp() {
 
   const loadWorkspaceData = useCallback(async () => {
     if (!idToken || !appUser?.onboardingCompleted) return;
+    if (isFirebaseMode) {
+      setDataLoading(!sharedWorkspace); setDataError(sharedError);
+      return;
+    }
     setDataLoading(true);
     setDataError(null);
     try {
@@ -133,7 +145,7 @@ function WorkspaceApp() {
     } finally {
       setDataLoading(false);
     }
-  }, [idToken, appUser?.onboardingCompleted, appUser?.role]);
+  }, [idToken, appUser?.onboardingCompleted, appUser?.role, sharedWorkspace, sharedError]);
 
   useEffect(() => {
     loadWorkspaceData();
@@ -1192,10 +1204,12 @@ function SessionWorkspace() {
 }
 
 export default function App() {
+  if (isLocalMode && new URLSearchParams(location.search).get(LOCAL_BACKUP_PARAMETER) !== '1') return <SharedAccessGateway />;
   return (
     <><PwaStatus />
     <AuthProvider>
       <LocalDataControls />
+      <SharedDataStatus />
       <SocketProvider>
         <SessionWorkspace />
       </SocketProvider>

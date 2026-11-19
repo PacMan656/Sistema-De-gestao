@@ -2,9 +2,11 @@
 
 Inventário de TI e helpdesk corporativo com login por código do setor e senha, setores gerenciados pelo TI e aplicativo PWA.
 
-**Edição local para GitHub Pages:** https://pacman656.github.io/Sistema-De-gestao/
+**Sistema compartilhado:** https://sistema-gestao-26.web.app
 
-A edição do Pages guarda os dados somente neste navegador, sem compartilhamento entre dispositivos e sem autenticação protegida por servidor. Ela inclui cadastro de setores, validação local de senhas, inventário, vínculos, movimentações, chamados locais, PDFs e backup. Consulte [Publicar e usar a edição local](DEPLOY.md).
+Todos os computadores devem usar esse mesmo endereço, com o código e a senha do setor cadastrados pelo TI. O Firebase mantém o banco central; inventário, setores, movimentações e chamados recebem atualizações entre as sessões autorizadas. O acesso exige internet e continua limitado pelas regras de cada setor. A primeira conta TI precisa ser ativada conforme [Publicação no Firebase](DEPLOY.md).
+
+Os registros antigos de cada navegador permanecem separados e não são transferidos automaticamente. O endereço anterior do GitHub Pages oferece acesso ao sistema compartilhado e ao acervo local para exportar backups, sem alterar sua origem de armazenamento. Veja [Uso em vários computadores e preservação dos cadastros](MULTICOMPUTADORES.md).
 
 As instruções abaixo se referem à versão opcional com servidor Node.js.
 

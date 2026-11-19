@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { appFetch, isLocalMode } from '../lib/runtime.ts';
 import { readJsonResponse } from '../lib/jsonResponse.ts';
+import { SHARED_APP_URL } from '../shared/deployment.ts';
 
 export function LocalDataControls() {
   const { appUser, idToken } = useAuth();
@@ -11,7 +12,7 @@ export function LocalDataControls() {
   if (!isLocalMode) return null;
   const headers = { Authorization: `Bearer ${idToken}` };
   return <section className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-950">
-    <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3"><p><strong>Modo local neste navegador.</strong> Os dados não são compartilhados entre dispositivos. Limpar os dados do navegador apaga este inventário. O acesso por setor é um controle local, sem proteção de servidor.</p>
+    <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3"><p><strong>Acervo local deste navegador.</strong> Use esta edição para exportar os cadastros antigos. Para trabalhar em vários computadores, abra o <a href={SHARED_APP_URL} className="font-bold underline">sistema compartilhado</a>. Limpar os dados deste navegador apaga apenas este acervo local.</p>
       {appUser?.role === 'admin_ti' && <div className="flex flex-wrap gap-3">
         <button type="button" disabled={busy} className="min-h-9 font-bold underline" onClick={async () => {
           setBusy(true); setError(null);
