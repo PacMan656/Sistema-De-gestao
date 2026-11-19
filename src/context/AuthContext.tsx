@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { apiFetch } from '../lib/api.ts';
 import { readJsonResponse } from '../lib/jsonResponse.ts';
-import { appFetch } from '../lib/runtime.ts';
+import { appFetch, isFirebaseMode } from '../lib/runtime.ts';
 import type { OnboardingInput } from '../shared/validation.ts';
 import type { AppUser, Department } from '../types/domain.ts';
 
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { await appFetch('/api/auth/logout', { method: 'POST', headers: idToken ? { Authorization: `Bearer ${idToken}` } : {} }); }
     finally {
       clearSession();
-
+      if (isFirebaseMode) location.reload();
     }
   };
   const refreshProfile = async () => {

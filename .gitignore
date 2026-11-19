@@ -10,6 +10,7 @@ data/
 !.env.example
 !.env.firebase.example
 .firebase/
+.firebase.deploy.json
 .firebaserc
 firebase-applet-config.json
 *service-account*.json

@@ -23,6 +23,7 @@ function copyPackage(name, from = process.cwd()) {
 }
 copyPackage('@electric-sql/pglite'); copyPackage('pdfkit');
 fs.copyFileSync('desktop/main.cjs', path.join(root, 'main.cjs'));
+fs.copyFileSync('desktop/firebase-default.json', path.join(root, 'firebase-default.json'));
 const dependencies = Object.fromEntries(['@electric-sql/pglite', 'pdfkit'].map(name => [name, JSON.parse(fs.readFileSync(path.join(root, 'node_modules', name, 'package.json'), 'utf8')).version]));
 fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'patriti-desktop', version: '1.0.0', description: 'Inventário de TI e helpdesk por setor', author: 'Equipe PatriTI', main: 'main.cjs', type: 'module', private: true, dependencies }));
 console.log(`Desktop runtime prepared with ${copied.size} explicit dependency packages. Run npm run desktop:pack.`);

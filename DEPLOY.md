@@ -24,7 +24,7 @@ npm run test:rules
 npm run test:firebase
 npm run build:firebase
 npm run security:build
-npm run firebase -- deploy --project ID_DO_PROJETO --config .firebase/deploy.json --only hosting,firestore:rules
+npm run firebase -- deploy --project ID_DO_PROJETO --config .firebase.deploy.json --only hosting,firestore:rules
 ```
 
 O preparo fixa o UID inicial nas regras geradas em `.firebase/` (ignorado pelo Git). As regras versionadas, sem preparo, n?o permitem bootstrap de administrador. N?o publique apenas o Hosting sem as regras.

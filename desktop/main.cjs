@@ -16,7 +16,9 @@ else {
     const config = path.join(app.getPath('userData'), 'firebase-url.txt');
     // An operator may point this executable at the deployed Firebase edition.
     // Only HTTPS Firebase Hosting URLs are allowed; no credentials are stored.
-    let remote = fs.existsSync(config) ? fs.readFileSync(config, 'utf8').trim() : '';
+    const defaultConfig = path.join(root, 'firebase-default.json');
+    let remote = fs.existsSync(config) ? fs.readFileSync(config, 'utf8').trim() : fs.existsSync(defaultConfig) ? JSON.parse(fs.readFileSync(defaultConfig, 'utf8')).url : '';
+    if (remote === 'local') remote = '';
     if (remote && !/^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)\/?$/.test(remote)) {
       dialog.showErrorBox('Configuração inválida', 'firebase-url.txt deve conter somente a URL HTTPS do Firebase Hosting.'); app.quit(); return;
     }

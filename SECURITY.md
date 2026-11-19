@@ -34,3 +34,9 @@ Use contas Google administrativas individuais com MFA e acesso mínimo. Comparti
 No plano gratuito, monitore as cotas de Authentication, Firestore e Hosting. Nenhum faturamento, função paga ou serviço de Storage é habilitado pelos arquivos de publicação deste projeto. A região do banco e os termos aplicáveis ao tratamento de dados devem ser avaliados pela organização antes da criação.
 
 Referências: [chaves Firebase](https://firebase.google.com/docs/projects/api-keys), [regras Firestore](https://firebase.google.com/docs/firestore/security/get-started), [guia de segurança da ANPD](https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia-orientativo-sobre-seguranca-da-informacao-para-agentes-de-tratamento-de-pequeno-porte).
+
+## Projeto publicado
+
+O projeto `sistema-gestao-26` foi publicado em `https://sistema-gestao-26.web.app`. O faturamento foi verificado como desativado; o banco padr?o est? no n?vel gratuito, na regi?o `southamerica-east1`, com prote??o contra exclus?o. A chave p?blica foi limitada ?s APIs `identitytoolkit.googleapis.com`, `securetoken.googleapis.com` e `firestore.googleapis.com` e aos dom?nios `sistema-gestao-26.web.app` e `sistema-gestao-26.firebaseapp.com`. O site envia somente a origem como refer?ncia ?s APIs externas. Sair da edi??o Firebase recarrega a p?gina para limpar os dados mantidos em mem?ria.
+
+A primeira publica??o manteve o bootstrap administrativo bloqueado. Para liberar o TI inicial, o usu?rio deve criar sua senha diretamente no Firebase Authentication e fornecer somente o UID ao operador, que republica as regras com esse UID espec?fico.
