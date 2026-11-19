@@ -17,6 +17,12 @@ test('Firebase edition: first TI, sectors, workstation links, movements, chat an
   const result = async (route: string, method = 'GET', body?: unknown) => { const response = await call(route, method, body); const data = await response.json(); assert.ok(response.ok, `${route}: ${data.error || response.status}`); return data; };
   try {
     await signOut(auth);
+    for (const route of ['/auth/session', '/auth/me']) {
+      const unauthenticated = await call(route);
+      assert.equal(unauthenticated.status, 401);
+      assert.match(unauthenticated.headers.get('Content-Type') || '', /application\/json/);
+      assert.deepEqual(await unauthenticated.json(), { error: 'Sessão não autenticada.' });
+    }
     const ti = await result('/auth/login', 'POST', { sector: 'TI', password });
     assert.equal(ti.user.role, 'admin_ti');
     const rh = await result('/departments', 'POST', { name: 'Recursos Humanos', code: 'RH', location: 'Sede', password });
@@ -30,6 +36,7 @@ test('Firebase edition: first TI, sectors, workstation links, movements, chat an
     const invalid = await call('/equipments', 'POST', { ...fields, departmentId: fin.id, assetTag: 'BAD-001', serialNumber: 'BAD-SER', equipmentType: 'Monitor', parentEquipmentId: computer.id });
     assert.equal(invalid.status, 400);
     await result('/auth/logout', 'POST');
+    assert.equal((await call('/auth/session')).status, 401);
     await result('/auth/login', 'POST', { sector: 'RH', password });
     assert.equal((await result('/equipments')).length, 2);
     detail = await result(`/equipments/${computer.id}`);

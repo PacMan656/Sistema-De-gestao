@@ -201,15 +201,15 @@ export async function firebaseFetch(url: string, options: RequestInit = {}): Pro
       const directory = await getDoc(reference(db, 'sectorLogins', input.sector));
       await signInWithEmailAndPassword(auth, directory.data()?.email || (input.sector === 'TI' ? tiEmail : 'unregistered@patriti.invalid'), input.password);
       if (!await read(db, 'profiles', auth.currentUser!.uid)) await bootstrapTi();
-      return session();
+      return await session();
     }
     if (route === '/auth/logout') { await signOut(auth); return json({ ok: true }); }
-    if (route === '/auth/session' || route === '/auth/me') return session();
+    if (route === '/auth/session' || route === '/auth/me') return await session();
     const profile = await currentProfile();
     if (route === '/auth/password' && method === 'POST') {
       requireAdmin(profile); passwordSchema.parse(body.password);
       await reauthenticateWithCredential(auth.currentUser!, EmailAuthProvider.credential(auth.currentUser!.email!, body.currentPassword));
-      await updatePassword(auth.currentUser!, body.password); return session();
+      await updatePassword(auth.currentUser!, body.password); return await session();
     }
     if (route === '/departments') {
       if (method === 'GET') return json(await departmentRows(profile));
